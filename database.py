@@ -1,11 +1,12 @@
 from peewee import SqliteDatabase, Model, CharField, DateField
-import bcrypt
+from hashing import hash_password, check_password
 
 # Путь к файлу базы данных
 db_path = 'data/Users.db'
 
 # Создание объекта базы данных
 db = SqliteDatabase(db_path)
+
 
 # Определение модели пользователя
 class User(Model):
@@ -22,13 +23,12 @@ class User(Model):
     @staticmethod
     def register(username, password, full_name, birthdate, birthplace, phone_number):
         try:
-            # Хэширование пароля перед сохранением в базу данных
-            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            hashed_password = hash_password(password)  # Используем функцию для хеширования
 
             with db.atomic():
                 User.create(
                     username=username,
-                    password=hashed_password.decode('utf-8'),  # Сохраняем хэшированный пароль
+                    password=hashed_password,
                     full_name=full_name,
                     birthdate=birthdate,
                     birthplace=birthplace,
@@ -42,12 +42,11 @@ class User(Model):
     @staticmethod
     def change_password(username, new_password):
         try:
-            # Хэширование нового пароля
-            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+            hashed_password = hash_password(new_password)  # Используем функцию для хеширования
 
             with db.atomic():
                 user = User.get(User.username == username)
-                user.password = hashed_password.decode('utf-8')  # Обновляем пароль
+                user.password = hashed_password  # Обновляем пароль
                 user.save()
 
             return True  # Успешное изменение пароля
@@ -58,13 +57,31 @@ class User(Model):
     def authenticate(username, password):
         try:
             user = User.get(User.username == username)
-            # Проверка хэшированного пароля
-            if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
-                return user  # Возвращаем объект пользователя при успешной аутентификации
+            if check_password(password, user.password):  # Используем функцию для проверки пароля
+                return user
         except User.DoesNotExist:
-            pass  # Пользователь не найден
+            pass
 
-        return None  # Неудачная аутентификация
+        return None
+
+    @staticmethod
+    def clear_database():
+        try:
+            with db.atomic():
+                User.delete().execute()
+            print("Все данные из базы данных удалены.")
+        except Exception as e:
+            print("Ошибка при удалении данных из базы данных.")
+
+    @staticmethod
+    def get_all_users():
+        try:
+            users = User.select()
+            for user in users:
+                print(f"Логин: {user.username}, Пароль (хэш): {user.password}")
+        except Exception as e:
+            print("Ошибка при получении пользователей из базы данных.")
+
 
 # Функция для инициализации базы данных и таблицы пользователей
 def initialize_database():

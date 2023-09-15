@@ -1,5 +1,6 @@
 from database import User, initialize_database
-import getpass
+from user_interface import register_user, login_user
+
 
 def main():
     initialize_database()
@@ -19,29 +20,22 @@ def main():
         else:
             print("Неверный выбор. Пожалуйста, выберите 1, 2 или 3.")
 
-def register_user():
-    username = input("Введите логин: ")
-    password = getpass.getpass("Введите пароль: ")  # Скрытие пароля ввода
-    full_name = input("Введите полное имя: ")
-    birthdate = input("Введите дату рождения: ")
-    birthplace = input("Введите место рождения: ")
-    phone_number = input("Введите номер телефона: ")
+def drop_db():
+    drop = User.drop_table()
 
-    if User.register(username, password, full_name, birthdate, birthplace, phone_number):
-        print("Регистрация успешна.")
+    if drop:
+        print("База данных  удалена")
     else:
-        print("Ошибка регистрации. Возможно, пользователь с таким логином уже существует.")
+        print("Ошибка при удалении базы данных")
 
-def login_user():
-    username = input("Введите логин: ")
-    password = getpass.getpass("Введите пароль: ")
+def show_db():
+    users = User.get_all_users()
 
-    user = User.authenticate(username, password)
-    if user:
-        print("Авторизация успешна.")
-        # Здесь вы можете добавить логику для доступа к файлам и другим функциям после успешной авторизации
+    if users:
+        print(users)
     else:
-        print("Ошибка авторизации. Пожалуйста, проверьте логин и пароль.")
+        print("Нет пользователей")
+
 
 if __name__ == "__main__":
     main()
