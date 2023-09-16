@@ -1,8 +1,12 @@
 from peewee import SqliteDatabase, Model, CharField, DateField
-from hashing import hash_password, check_password
+
+from database.hashing import hash_password, check_password
+
+from paths import paths
 
 # Путь к файлу базы данных
-db_path = 'data/Users.db'
+db_path = paths.database_file
+
 
 # Создание объекта базы данных
 db = SqliteDatabase(db_path)
